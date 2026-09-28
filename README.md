@@ -527,6 +527,13 @@ env -u ELECTRON_RUN_AS_NODE -u NODE_OPTIONS SNAPTRANS_CHECK_OCR="<绝对路径>/
 > electron-builder 会以 `EBUSY: resource busy or locked, unlink ...app.asar` 失败。
 > 换一个 `-c.directories.output=<新目录>` 即可。
 >
+> ⚠️ **冒烟跑完会留下进程**，它们会锁住打包产物：
+> `tasklist | grep -i snaptrans` 通常能看到一个 `SnapTrans 1.0.0.exe`（便携版外壳）
+> 加几个 `SnapTrans.exe`（主进程 / GPU 进程）。冒烟脚本调了 `app.exit()`，
+> 但外壳进程不会跟着退。**替换 `dist/` 里的旧产物前先确认没有残留进程**，
+> 否则 `cp` 会报 `Device or resource busy`。
+> 清理：`taskkill //PID <pid> //F`（Git Bash 里要写双斜杠）。
+>
 > 代价是**旧输出目录会留下删不掉的残渣**：`rd /s /q` 报「另一个程序正在使用此文件」、
 > `ren` 报「拒绝访问」，但 `tasklist` 里又查不到任何 SnapTrans/electron 进程 ——
 > 是环境级的文件锁，跟项目无关。此时目录里只剩一个 780KB 上下的 `app.asar`，
