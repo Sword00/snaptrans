@@ -23,6 +23,7 @@
  */
 const path = require('path');
 const fs = require('fs');
+const platform = require('./platform');
 
 // 允许在纯 Node（自检脚本）下加载：此时 require('electron') 返回的是二进制路径字符串
 let electron = null;
@@ -84,6 +85,13 @@ function modelDir() {
 async function getEngine() {
   if (!enginePromise) {
     enginePromise = (async () => {
+      /* 先探架构，再谈加载。
+       * onnxruntime-node@1.30 的 bin/napi-v6/darwin/ 下只有 arm64 —— Intel Mac 上
+       * 直接 import 会抛原生模块加载失败，用户读不出「你的 CPU 架构没有预编译二进制」。
+       * 这里提前把它翻译成人话（探测逻辑与 src/platform.js 同一份，避免两处判断漂移）。 */
+      const support = platform.localOcrSupport();
+      if (!support.ok) throw new Error(`本地 OCR 不可用：${support.detail}`);
+
       const dir = modelDir();
       if (!dir) {
         throw new Error(`找不到 OCR 模型目录（需要 ${MODEL_FILES.detectionPath} 等文件）`);

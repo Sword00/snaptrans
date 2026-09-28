@@ -276,6 +276,72 @@
   $('btnRestart').addEventListener('click', () => api.relaunch());
   $('btnRestartLater').addEventListener('click', hideRestart);
 
+  /* ==================== 系统权限 ==================== */
+
+  /** macOS 屏幕录制 TCC 状态 → 徽章样式与文案 */
+  const SCREEN_STATUS = {
+    granted: ['ok', '已授权'],
+    denied: ['bad', '被拒绝'],
+    restricted: ['bad', '受策略限制'],
+    'not-determined': ['warn', '尚未授权'],
+    unknown: ['warn', '状态未知'],
+  };
+
+  /**
+   * 这张卡片只在「真的有事要说」的时候出现：
+   *   - macOS 上永远显示（屏幕录制授权是最容易卡住用户的一步）
+   *   - 其他平台只在本地识别引擎不可用时显示（比如 Intel Mac 没有 arm64 二进制）
+   * 平时在 Windows 上它是隐藏的，不占版面。
+   */
+  function paintPlatform() {
+    const p = cfg || {};
+    const ocrOk = !p.ocrSupport || p.ocrSupport.ok !== false;
+    const showCard = !!p.isMac || !ocrOk;
+    $('platformCard').classList.toggle('hidden', !showCard);
+    if (!showCard) return;
+
+    /* ---- 屏幕录制（仅 macOS 需要） ---- */
+    for (const id of ['permScreenRow', 'permScreenBtns', 'permScreenHint']) {
+      $(id).classList.toggle('hidden', !p.isMac);
+    }
+    if (p.isMac) {
+      const [cls, text] = SCREEN_STATUS[p.screenPermission] || ['warn', p.screenPermission || '未知'];
+      const badge = $('permScreenBadge');
+      badge.className = 'badge ' + cls;
+      badge.textContent = text;
+      $('permScreenText').textContent =
+        p.screenPermission === 'granted' ? '' : '未授权时截出来的是一片黑';
+      $('permScreenHint').innerHTML = p.screenPermission === 'granted'
+        ? '已可以正常截图。若刚刚才在系统设置里打开开关，<b>仍需重启应用</b>才会真正生效。'
+        : '在「系统设置 → 隐私与安全性 → 屏幕录制」里勾选 SnapTrans，然后<b>重启应用</b>。'
+          + 'macOS 只在进程启动时读取这项权限 —— 已经跑着的进程即使授权了，拿到的仍然是黑屏。';
+    }
+
+    /* ---- 本地识别引擎架构支持 ---- */
+    const ocrBadge = $('permOcrBadge');
+    if (ocrOk) {
+      ocrBadge.className = 'badge ok';
+      ocrBadge.textContent = '可用';
+      $('permOcrText').textContent = 'PaddleOCR PP-OCRv4';
+    } else {
+      ocrBadge.className = 'badge bad';
+      ocrBadge.textContent = '不可用';
+      $('permOcrText').textContent = '本机没有匹配的 ONNX Runtime 二进制';
+    }
+
+    const detail = p.ocrSupport && p.ocrSupport.detail
+      ? `<br /><span class="perm-bad">${p.ocrSupport.detail}</span>`
+      : '';
+    $('platformHint').innerHTML = `运行平台：<code>${p.platform || '?'}/${p.arch || '?'}</code>`
+      + `　长截图：<code>${p.longshotSupported ? '支持' : '不支持'}</code>${detail}`;
+  }
+
+  $('btnScreenSettings').addEventListener('click', () => {
+    api.openScreenSettings();
+    status('已打开系统设置，勾选后请点「重启应用」', 'ok');
+  });
+  $('btnRelaunch').addEventListener('click', () => api.relaunch());
+
   /* ==================== 其余设置 ==================== */
 
   async function load() {
@@ -284,6 +350,7 @@
     hotkey = cfg.hotkey || '';
     paintHotkey();
     paintDataDir();
+    paintPlatform();
     // 上次改了目录但没重启就关掉了设置窗 —— 打开时提醒一下
     if (cfg.dataDirPending) showRestart(`数据目录将在重启后切换到 ${cfg.dataDirPending}`);
 
@@ -339,6 +406,7 @@
     cfg = { ...cfg, ...(await api.setSettings(patch)) };
     hotkey = cfg.hotkey || hotkey;
     paintHotkey();
+    paintPlatform();
     status('已保存 ✓', 'ok');
     setTimeout(() => status(''), 2200);
   });

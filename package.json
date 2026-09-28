@@ -14,11 +14,15 @@
     "test:datadir": "node scripts/start.js scripts/datadir-test.js",
     "test:settings": "node scripts/start.js scripts/settings-uitest.js",
     "test:fontsize": "node scripts/start.js scripts/test-fontsize.js",
+    "test:platform": "node scripts/start.js scripts/platform-test.js",
     "calib:inkratio": "node scripts/start.js scripts/calib-inkratio.js",
     "icons": "node scripts/make-icons.js",
+    "icons:preview": "node scripts/preview-icons.js",
     "postinstall": "node scripts/make-icons.js",
     "dist": "electron-builder --win --x64",
-    "pack": "electron-builder --win --x64 --dir"
+    "pack": "electron-builder --win --x64 --dir",
+    "dist:mac": "electron-builder --mac --arm64",
+    "pack:mac": "electron-builder --mac --arm64 --dir"
   },
   "dependencies": {
     "@gutenye/ocr-node": "^1.4.9"
@@ -36,6 +40,7 @@
       "zh-CN",
       "en-US"
     ],
+    "afterPack": "scripts/afterpack-trim.js",
     "files": [
       "main.js",
       "preload.js",
@@ -45,9 +50,6 @@
       "package.json",
       "!**/*.map",
       "!node_modules/onnxruntime-node/script/**",
-      "!node_modules/onnxruntime-node/bin/napi-v6/darwin/**",
-      "!node_modules/onnxruntime-node/bin/napi-v6/linux/**",
-      "!node_modules/onnxruntime-node/bin/napi-v6/win32/arm64/**",
       "!node_modules/onnxruntime-node/bin/napi-v6/win32/x64/DirectML.dll",
       "!node_modules/onnxruntime-node/bin/napi-v6/win32/x64/dxcompiler.dll",
       "!node_modules/onnxruntime-node/bin/napi-v6/win32/x64/dxil.dll",
@@ -90,6 +92,29 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "shortcutName": "截图翻译"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.productivity",
+      "icon": "assets/icon.icns",
+      "darkModeSupport": true,
+      "minimumSystemVersion": "10.15.0",
+      "artifactName": "${productName}-${version}-mac-${arch}.${ext}",
+      "gatekeeperAssess": false,
+      "notarize": false
     }
   }
 }

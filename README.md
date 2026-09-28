@@ -389,7 +389,10 @@ snaptrans/
 
 ## 7. 已知限制
 
-- **仅 Windows**。长截图依赖 PowerShell 调 `user32.dll`；其余功能本身跨平台，但未在 macOS/Linux 上验证。
+- **主力平台是 Windows**。macOS 已做适配（见 [README-macOS.md](README-macOS.md)），
+  但只覆盖 **Apple Silicon**：上游 `onnxruntime-node` 在 macOS 上只提供 arm64 二进制，
+  Intel Mac 用不了本地 OCR。Linux 未验证。
+- **长截图仅 Windows**：依赖 PowerShell 调 `user32.dll` 模拟滚轮，macOS / Linux 上按钮会直接隐藏。
 - **长截图**是「模拟滚轮 + 按重叠区拼接」，对固定表头 / 视差滚动 / 无限加载的页面效果有限，最多抓 12 帧。
 - 翻译替换依赖 OCR 的外框，**竖排文字、艺术字、复杂背景上的文字**替换后可能不够自然。
 - OCR 对**清晰的界面文字**效果好（标题、正文、按钮、徽章、彩底白字），实测 11px 级别的英文小字也能认；
@@ -466,6 +469,12 @@ snaptrans/
 npm run pack    # 只出免安装目录 dist/win-unpacked/
 npm run dist    # 出安装包 dist/SnapTrans Setup 1.0.0.exe + portable 版
 ```
+
+macOS 的打包配置（`npm run dist:mac`）与验证步骤见 [README-macOS.md](README-macOS.md)。
+
+打包输出目录**每次换一个新的**（`--config.directories.output=dist-xxx`）。
+同一个目录重复打包会撞上 `EBUSY: resource busy or locked, unlink ...app.asar` ——
+上一轮遗留的 `app.asar` 被锁住，`tasklist` 里查不到任何相关进程，属环境级问题，换目录最省事。
 
 `package.json` 里配了 `"electronDist": "node_modules/electron/dist"`，让 electron-builder 直接复用本地已装好的 Electron 二进制，**避免每次打包都去 GitHub 重新下载**（网络受限时这一步会直接失败）。
 

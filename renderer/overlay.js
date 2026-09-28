@@ -28,6 +28,7 @@
     langs: [],
     baseImage: null,     // 长截图结果
     emojiAt: null,
+    platform: null,      // 主进程给的平台能力（决定长截图按钮显不显示）
   };
 
   const dom = {};
@@ -74,6 +75,11 @@
     S.cfg = payload.settings || {};
     S.display = payload.display;
     S.langs = payload.langs || [];
+    S.platform = payload.platform || null;
+    // 老版本主进程不带 platform 时兜底问一次，避免长截图按钮在不支持的系统上还留着
+    if (!S.platform && api.platformStatus) {
+      S.platform = await api.platformStatus().catch(() => null);
+    }
     S.color = S.cfg.color || '#ff3b30';
     S.strokeSize = S.cfg.strokeSize || 3;
     S.targetLang = S.cfg.targetLang || 'zh-Hans';
@@ -459,10 +465,20 @@
   window.addEventListener('mousemove', updateCursor);
 
   /* ==================== 工具栏 ==================== */
+
+  /** macOS 上把提示里的 Ctrl 换成 ⌘ —— 按钮上写着 Ctrl+T、实际要按 Cmd+T 会让人以为坏了 */
+  function fixAccel(text) {
+    if (!S.platform || !S.platform.isMac) return text;
+    return String(text).replace(/\bCtrl\b/g, '\u2318');
+  }
+
   function buildToolbar() {
     const el = dom.toolbar;
     el.innerHTML = '';
     for (const item of TOOLBAR) {
+      // 长截图靠模拟滚轮 + 抓屏拼接，底层是 Windows 的 user32.dll；
+      // macOS / Linux 上点了只会弹一句「不可用」，不如直接不显示。
+      if (item.id === 'longshot' && S.platform && S.platform.longshotSupported === false) continue;
       if (item.t === 'sep') {
         const d = document.createElement('div');
         d.className = 'sep';
@@ -472,7 +488,7 @@
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'tbtn' + (item.cls ? ' ' + item.cls : '');
-      b.title = item.title;
+      b.title = fixAccel(item.title);
       b.dataset.kind = item.t;
       b.dataset.id = item.id;
       b.innerHTML = ICONS[item.icon] || '';
@@ -1003,7 +1019,11 @@
   async function doLongshot() {
     if (S.busy) return;
     const probe = await api.longshotProbe().catch(() => null);
-    if (!probe || !probe.ok) { toast('长截图需要 Windows PowerShell，当前环境不可用'); return; }
+    if (!probe || !probe.ok) {
+      const os = (S.platform && S.platform.platformName) || '当前系统';
+      toast(`长截图依赖 Windows 的输入模拟，${os} 上暂不支持`);
+      return;
+    }
     S.busy = true;
     showBusy('长截图中…（请勿操作鼠标）');
     const sel = { ...S.sel };

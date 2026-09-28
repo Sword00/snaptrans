@@ -8,7 +8,9 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+      /* 前面两个是 macOS 的中英文字体，后面两个是 Windows 的。
+         都列上，免得在 Mac 上掉进 serif 兜底。 */
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
       background: #f5f6f8;
       color: #1f2329;
       font-size: 13px;
@@ -199,6 +201,22 @@
     #status.ok { color: #07c160; }
     #status.err { color: #e24b4b; }
     .dep { opacity: .45; pointer-events: none; }
+    .hidden { display: none !important; }
+
+    /* ---------- 系统权限 ---------- */
+    .perm-ok { color: #0d7a45; }
+    .perm-bad { color: #e24b4b; }
+    .perm-warn { color: #b06f00; }
+    .badge {
+      flex: none;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      line-height: 18px;
+    }
+    .badge.ok { background: #eaf9f0; color: #0d7a45; }
+    .badge.bad { background: #fdecec; color: #e24b4b; }
+    .badge.warn { background: #fff8e6; color: #8a6d1f; }
   </style>
 </head>
 <body>
@@ -309,6 +327,29 @@
       <b>需要重启程序才能生效。</b>
     </div>
     <div class="hint" id="paths"></div>
+  </div>
+
+  <div class="card hidden" id="platformCard">
+    <h2>系统权限</h2>
+
+    <div class="row" id="permScreenRow">
+      <label>屏幕录制</label>
+      <span class="badge" id="permScreenBadge">—</span>
+      <span class="hint" id="permScreenText" style="margin-top:0"></span>
+    </div>
+    <div class="btns" id="permScreenBtns">
+      <button class="act" id="btnScreenSettings">打开系统设置</button>
+      <button class="act" id="btnRelaunch">重启应用</button>
+    </div>
+    <div class="hint" id="permScreenHint"></div>
+
+    <div class="row" id="permOcrRow">
+      <label>本地识别</label>
+      <span class="badge" id="permOcrBadge">—</span>
+      <span class="hint" id="permOcrText" style="margin-top:0"></span>
+    </div>
+
+    <div class="hint" id="platformHint"></div>
   </div>
 
   <div id="restartBar" class="hidden">

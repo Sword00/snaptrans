@@ -9,7 +9,11 @@ let FILE = null;
 let data = null;
 
 const DEFAULTS = {
-  hotkey: 'Alt+Shift+A',
+  /* 默认快捷键按平台分。
+   * macOS 上绝对不能沿用 Alt+Shift+A —— 那是 Option+Shift+A，系统会把它当特殊字符输入
+   * （实际打出的是「Å」），注册成全局快捷键会直接吞掉这个组合的正常输入。
+   * Command+Shift+A 在 macOS 上没被系统占用，且符合用户直觉。 */
+  hotkey: process.platform === 'darwin' ? 'Command+Shift+A' : 'Alt+Shift+A',
   // OCR 引擎：local = 本地 PaddleOCR PP-OCRv4（离线免费）
   ocrEngine: 'local',
   // 翻译引擎：free = 免费接口（Edge/Google/MyMemory）；llm = OpenAI 兼容大模型

@@ -52,5 +52,9 @@ contextBridge.exposeInMainWorld('api', {
   longshotScroll: (payload) => ipcRenderer.invoke('longshot:scroll', payload),
   longshotProbe: () => ipcRenderer.invoke('longshot:probe'),
 
+  /* 平台与系统权限 */
+  platformStatus: () => ipcRenderer.invoke('platform:status'),
+  openScreenSettings: () => ipcRenderer.invoke('platform:open-screen-settings'),
+
   quit: () => ipcRenderer.invoke('app:quit'),
 });

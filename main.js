@@ -17,6 +17,7 @@ const ocr = require('./src/ocr');
 const native = require('./src/native');
 const datadir = require('./src/datadir');
 const hotkeyUtil = require('./src/hotkey');
+const platform = require('./src/platform');
 const { configureGpu } = require('./src/gpu');
 
 /* ---------------- 数据目录重定向 ----------------
@@ -116,6 +117,19 @@ let quitting = false;
 const ROOT = __dirname;
 const R = (...p) => path.join(ROOT, ...p);
 
+/** 平台能力快照：渲染层用它决定「长截图按钮显不显示」「Ctrl 还是 ⌘」「权限提示要不要出」 */
+function platformStatus() {
+  return {
+    platform: process.platform,
+    arch: process.arch,
+    platformName: platform.platformName,
+    isMac: platform.isMac,
+    screenPermission: platform.screenAccessStatus(),
+    ocrSupport: platform.localOcrSupport(),
+    longshotSupported: native.isWin,
+  };
+}
+
 
 function stamp() {
   const d = new Date();
@@ -165,26 +179,60 @@ function showPinned() {
   }
 }
 
+/** 回滚到「什么都没发生」的状态（截图起不来时用） */
+function abortCapture() {
+  capPhase = 'idle';
+  closeOverlays();
+  showPinned();
+}
+
 async function startCapture() {
   if (capPhase !== 'idle') return;
   capPhase = 'starting';
   hidePinned();
   closeOverlays();
   try {
-    const { displays, sources } = await grabSources();
-    if (!sources.length) throw new Error('未获取到任何屏幕源');
-    for (const d of displays) {
-      const src = sourceFor(d, sources, displays);
-      if (!src) continue;
-      createOverlay(d, src.thumbnail.toDataURL());
+    /* 权限守卫最多拦一次。
+     * 用户明确选了「仍然继续」之后就不再拦 —— 否则桌面真的是一片黑时会被反复弹框。 */
+    let skipGuard = false;
+    for (;;) {
+      const { displays, sources } = await grabSources();
+      if (!sources.length) throw new Error('未获取到任何屏幕源');
+
+      if (!skipGuard) {
+        /* macOS 屏幕录制授权守卫。
+         * 未授权时 getSources() 既不报错也不返回空数组，而是返回全黑缩略图 ——
+         * 不拦的话用户看到的就是「遮罩一片黑」，完全联想不到是权限问题。 */
+        const guard = platform.guardCapture(sources);
+        if (!guard.ok) {
+          log('截图被拦下：', guard.reason, '权限状态=', guard.status);
+          abortCapture();
+          const action = await platform.explainCaptureBlocked(guard);
+          log('用户对权限提示选择了：', action);
+          if (action === 'settings') { platform.openScreenSettings(); return; }
+          if (action === 'relaunch') { quitting = true; app.relaunch(); app.exit(0); return; }
+          if (action !== 'continue') return; // cancel
+          skipGuard = true;
+          capPhase = 'starting';
+          hidePinned();
+          continue;
+        }
+      }
+
+      // 附件型应用（macOS 藏了 Dock）光 show() 拿不到键盘焦点，ESC 就退不出去
+      platform.focusApp();
+      for (const d of displays) {
+        const src = sourceFor(d, sources, displays);
+        if (!src) continue;
+        createOverlay(d, src.thumbnail.toDataURL());
+      }
+      if (!overlays.length) throw new Error('遮罩窗口创建失败');
+      capPhase = 'active';
+      return;
     }
-    if (!overlays.length) throw new Error('遮罩窗口创建失败');
-    capPhase = 'active';
   } catch (e) {
     console.error('[main] 截图失败', e);
-    capPhase = 'idle';
-    closeOverlays();
-    showPinned();
+    abortCapture();
     dialog.showErrorBox('截图失败', String((e && e.message) || e));
   }
 }
@@ -236,6 +284,7 @@ function createOverlay(display, dataUrl) {
     },
     settings: settings.all(),
     langs: translateMod.TARGET_LANGS,
+    platform: platformStatus(),
   };
 
   win.webContents.once('did-finish-load', () => {
@@ -351,13 +400,33 @@ function openSettings() {
   });
   settingsWin.setMenuBarVisibility(false);
   settingsWin.loadFile(R('renderer', 'settings.html'));
-  settingsWin.once('ready-to-show', () => settingsWin.show());
+  settingsWin.once('ready-to-show', () => {
+    settingsWin.show();
+    // macOS 附件型应用不会自动把窗口带到前台
+    platform.focusApp();
+    try { settingsWin.focus(); } catch (_) {}
+  });
   settingsWin.on('closed', () => { settingsWin = null; });
 }
 
 /* ==================== 托盘 ==================== */
 
+/**
+ * macOS 必须显式装应用菜单，否则 Cmd+Q / Cmd+C / Cmd+V / Cmd+A 全部失效
+ * （Chromium 在 macOS 上把编辑快捷键交给菜单的 Edit 角色处理）。详见 src/platform.js。
+ * 快捷键改了之后菜单里的提示文字也要跟着变，所以放在 refreshTray 里一起刷。
+ */
+function installAppMenu() {
+  platform.installMenu({
+    hotkeyLabel: settings.get('hotkey'),
+    onCapture: () => startCapture(),
+    onSettings: () => openSettings(),
+    onQuit: () => { quitting = true; app.quit(); },
+  });
+}
+
 function refreshTray() {
+  installAppMenu();
   if (!tray) return;
   const hotkey = settings.get('hotkey');
   const menu = Menu.buildFromTemplate([
@@ -380,15 +449,35 @@ function refreshTray() {
   tray.setContextMenu(menu);
 }
 
-function createTray() {
-  const iconPath = R('assets', 'tray.png');
-  let icon = nativeImage.createFromPath(iconPath);
+/** macOS 菜单栏图标要「纯黑 + alpha」的 template image，系统才会按亮/暗色自动反色 */
+function trayIcon() {
+  if (platform.isMac) {
+    const icon = nativeImage.createFromPath(R('assets', 'trayTemplate.png'));
+    if (!icon.isEmpty()) {
+      // 同目录下的 trayTemplate@2x.png 会被 Electron 自动当成 Retina 版一起加载
+      icon.setTemplateImage(true);
+      return icon;
+    }
+    log('未找到 trayTemplate.png，回退彩色图标');
+  }
+  let icon = nativeImage.createFromPath(R('assets', 'tray.png'));
   if (icon.isEmpty()) icon = nativeImage.createEmpty();
-  tray = new Tray(icon);
+  return icon;
+}
+
+function createTray() {
+  tray = new Tray(trayIcon());
   tray.setToolTip('SnapTrans 截图翻译');
   refreshTray();
-  tray.on('double-click', () => startCapture());
-  tray.on('click', () => startCapture());
+  if (platform.isMac) {
+    /* macOS 上 setContextMenu 之后，单击托盘图标就会弹菜单，**同时还会再发一个 click 事件**。
+     * 这里要是绑了 startCapture，用户每次想看菜单都会顺手截一次屏。
+     * 所以 macOS 只留菜单交互（菜单第一项就是「截图翻译」）。 */
+    tray.on('double-click', () => startCapture());
+  } else {
+    tray.on('click', () => startCapture());
+    tray.on('double-click', () => startCapture());
+  }
 }
 
 /* ==================== 全局快捷键 ==================== */
@@ -503,6 +592,15 @@ function registerIpc() {
     return true;
   });
 
+  /* ---------- 平台与权限 ---------- */
+
+  ipcMain.handle('platform:status', () => platformStatus());
+
+  ipcMain.handle('platform:open-screen-settings', () => {
+    platform.openScreenSettings();
+    return true;
+  });
+
   ipcMain.handle('settings:get', () => {
     const hk = settings.get('hotkey');
     return {
@@ -514,6 +612,7 @@ function registerIpc() {
       version: app.getVersion(),
       electron: process.versions.electron,
       ...datadir.status(),
+      ...platformStatus(),
     };
   });
 
@@ -545,6 +644,7 @@ function registerIpc() {
       // 空 = 主动关闭，不算失败，给 null 让界面别报红
       hotkeyRegistered: hk ? globalShortcut.isRegistered(hk) : null,
       ...datadir.status(),
+      ...platformStatus(),
     };
   });
 
@@ -660,7 +760,17 @@ app.on('second-instance', () => {
 
 app.whenReady().then(async () => {
   log(`启动：版本 ${app.getVersion()}，打包=${app.isPackaged}，资源目录=${process.resourcesPath}`);
+  log(`平台：${platform.platformName} ${process.arch}（electron ${process.versions.electron} / node ${process.versions.node}）`);
   settings.init();
+
+  /* macOS：藏掉 Dock 图标，做成纯菜单栏应用（对标 Windows 的 skipTaskbar）。
+   * 必须在建窗口之前调用，否则 Dock 图标会先闪一下。 */
+  platform.hideDock();
+  if (platform.isMac) log('屏幕录制权限状态：', platform.screenAccessStatus());
+
+  // 本地 OCR 能不能跑（Intel Mac 上 onnxruntime-node 没有 x64 二进制）
+  const ocrSupport = platform.localOcrSupport();
+  if (!ocrSupport.ok) log('本地 OCR 不可用：', ocrSupport.detail);
 
   /* ---------------- 打包冒烟 ----------------
    * 验证 asar 解包后 ONNX 原生模块能加载、模型目录能定位到 resources/models。
@@ -669,6 +779,14 @@ app.whenReady().then(async () => {
    */
   if (CHECK_OCR) {
     const img = CHECK_OCR_IMG;
+    // 架构不支持就别往下走了 —— 否则报出来的是「原生模块加载失败」，
+    // 完全看不出根因是「这个 CPU 架构没有预编译二进制」。
+    if (!ocrSupport.ok) {
+      log('check-ocr：本地 OCR 架构不支持 ——', ocrSupport.detail);
+      logSync('check-ocr：', '未通过');
+      app.exit(1);
+      return;
+    }
     log('check-ocr：模型目录=', ocr.modelDir());
     let ok = false;
     try {
