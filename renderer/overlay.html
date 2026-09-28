@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' data: blob:;" />
+  <title>SnapTrans</title>
+  <link rel="stylesheet" href="overlay.css" />
+</head>
+<body>
+  <canvas id="shot"></canvas>
+
+  <div id="catch"></div>
+
+  <div id="frame" class="hidden">
+    <canvas id="layer"></canvas>
+    <div class="h" data-d="nw"></div>
+    <div class="h" data-d="n"></div>
+    <div class="h" data-d="ne"></div>
+    <div class="h" data-d="e"></div>
+    <div class="h" data-d="se"></div>
+    <div class="h" data-d="s"></div>
+    <div class="h" data-d="sw"></div>
+    <div class="h" data-d="w"></div>
+    <div id="textEditor" class="hidden" contenteditable="true" spellcheck="false"></div>
+  </div>
+
+  <div id="sizeTip" class="hidden"></div>
+  <div id="hint" class="hidden"></div>
+
+  <div id="styleBar" class="hidden">
+    <div class="swatches" id="swatches"></div>
+    <div class="divider"></div>
+    <div class="widths" id="widths"></div>
+  </div>
+
+  <div id="toolbar" class="hidden"></div>
+
+  <div id="langMenu" class="popup hidden"></div>
+  <div id="emojiPanel" class="popup hidden"></div>
+
+  <div id="toast" class="hidden"></div>
+  <div id="busy" class="hidden"><span class="ring"></span><span id="busyText">处理中…</span></div>
+
+  <script src="icons.js"></script>
+  <script src="objects.js"></script>
+  <script src="overlay.js"></script>
+</body>
+</html>

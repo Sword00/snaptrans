@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self';" />
+  <title>贴图</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: transparent; }
+    body { outline: 1px solid rgba(7, 193, 96, .85); outline-offset: -1px; }
+    #img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: fill;
+      -webkit-user-drag: none;
+      -webkit-app-region: drag;
+      cursor: move;
+    }
+    #bar {
+      position: fixed;
+      top: 4px; right: 4px;
+      display: none;
+      gap: 2px;
+      padding: 3px;
+      border-radius: 6px;
+      background: rgba(28, 28, 30, .78);
+      -webkit-app-region: no-drag;
+    }
+    body:hover #bar { display: flex; }
+    #bar button {
+      width: 26px; height: 26px;
+      border: none; border-radius: 5px;
+      background: transparent; color: #fff;
+      cursor: pointer; font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #bar button:hover { background: rgba(255, 255, 255, .18); }
+    #bar .x:hover { background: rgba(226, 75, 75, .85); }
+    #tip {
+      position: fixed;
+      left: 50%; bottom: 6px;
+      transform: translateX(-50%);
+      padding: 3px 10px;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, .6);
+      color: #fff; font-size: 11px;
+      font-family: "Microsoft YaHei", sans-serif;
+      display: none;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <img id="img" alt="" />
+  <div id="bar">
+    <button id="btnCopy" title="复制到剪贴板">⧉</button>
+    <button id="btnSave" title="另存为">⤓</button>
+    <button id="btnClose" class="x" title="关闭（Esc / 双击）">✕</button>
+  </div>
+  <div id="tip"></div>
+  <script src="pin.js"></script>
+</body>
+</html>

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self';" />
+  <title>SnapTrans 设置</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+      background: #f5f6f8;
+      color: #1f2329;
+      font-size: 13px;
+      padding: 22px 26px 90px;
+      user-select: none;
+    }
+    /* 重启提示条出现时，底部要再让出它的高度，否则会盖住最后一张卡片 */
+    body.has-restart { padding-bottom: 156px; }
+    h1 { font-size: 17px; margin-bottom: 4px; }
+    .sub { color: #8a9099; font-size: 12px; margin-bottom: 18px; }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 16px 18px;
+      margin-bottom: 14px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
+    }
+    .card h2 {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .card h2::before {
+      content: "";
+      width: 3px; height: 13px;
+      border-radius: 2px;
+      background: #07c160;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 7px 0;
+    }
+    .row > label:first-child {
+      width: 116px;
+      flex: none;
+      color: #4e5969;
+    }
+    input[type="text"], input[type="password"], select {
+      flex: 1;
+      height: 32px;
+      padding: 0 10px;
+      border: 1px solid #dcdfe6;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+      color: #1f2329;
+      background: #fff;
+      outline: none;
+    }
+    input:focus, select:focus { border-color: #07c160; }
+    input:disabled, select:disabled { background: #f5f6f8; color: #a8adb5; }
+    .seg { display: flex; gap: 0; border: 1px solid #dcdfe6; border-radius: 6px; overflow: hidden; }
+    .seg button {
+      padding: 0 14px;
+      height: 32px;
+      border: none;
+      background: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      font-family: inherit;
+      color: #4e5969;
+      border-right: 1px solid #dcdfe6;
+    }
+    .seg button:last-child { border-right: none; }
+    .seg button.on { background: #07c160; color: #fff; }
+    .hint { color: #8a9099; font-size: 12px; line-height: 1.7; margin-top: 6px; }
+    .hint code {
+      background: #f0f2f5;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 11.5px;
+      font-family: Consolas, monospace;
+    }
+    .check { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 6px 0; }
+    .check input { width: 15px; height: 15px; accent-color: #07c160; cursor: pointer; }
+
+    /* ---------- 快捷键录制 ---------- */
+    .rec {
+      flex: 1;
+      min-width: 0;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 0 10px;
+      border: 1px solid #dcdfe6;
+      border-radius: 6px;
+      background: #fff;
+      cursor: pointer;
+      outline: none;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 13px;
+      color: #1f2329;
+    }
+    .rec:hover { border-color: #07c160; }
+    .rec > span:first-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .rec.rec-on {
+      border-color: #07c160;
+      box-shadow: 0 0 0 3px rgba(7, 193, 96, .16);
+      color: #07c160;
+    }
+    .rec.rec-off > span:first-child { color: #a8adb5; font-family: inherit; }
+    .rec .rec-x {
+      flex: none;
+      width: 18px; height: 18px;
+      line-height: 16px;
+      text-align: center;
+      border-radius: 4px;
+      color: #c0c4cc;
+      font-size: 14px;
+      font-family: sans-serif;
+      visibility: hidden;
+    }
+    .rec:hover .rec-x { visibility: visible; }
+    .rec .rec-x:hover { background: #fdecec; color: #e24b4b; }
+    .rec.rec-off .rec-x { display: none; }
+
+    /* ---------- 数据目录 ---------- */
+    .path {
+      flex: 1;
+      min-width: 0;
+      padding: 7px 10px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      background: #fafbfc;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 12px;
+      color: #4e5969;
+      word-break: break-all;
+      user-select: text;
+    }
+    .path.custom { border-color: #b7e7cd; background: #f2fbf6; color: #0d7a45; }
+    .btns { display: flex; gap: 8px; flex-wrap: wrap; padding: 8px 0 2px; }
+
+    /* ---------- 重启提示条 ---------- */
+    #restartBar {
+      position: fixed;
+      left: 0; right: 0; bottom: 63px;
+      padding: 10px 26px;
+      background: #fff8e6;
+      border-top: 1px solid #ffe0a3;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: #8a6d1f;
+      z-index: 10;
+    }
+    #restartBar.hidden { display: none; }
+    #restartBar #restartText { flex: 1; min-width: 0; }
+    #restartBar button.act { height: 28px; padding: 0 14px; font-size: 12px; }
+
+    #foot {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      padding: 14px 26px;
+      background: rgba(245, 246, 248, .96);
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    button.act {
+      height: 34px;
+      padding: 0 20px;
+      border-radius: 6px;
+      border: 1px solid #dcdfe6;
+      background: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      font-family: inherit;
+      color: #1f2329;
+    }
+    button.act:hover { border-color: #07c160; color: #07c160; }
+    button.act.primary { background: #07c160; border-color: #07c160; color: #fff; }
+    button.act.primary:hover { background: #06ad56; color: #fff; }
+    #status { flex: 1; font-size: 12px; color: #8a9099; }
+    #status.ok { color: #07c160; }
+    #status.err { color: #e24b4b; }
+    .dep { opacity: .45; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <h1>SnapTrans 截图翻译</h1>
+  <div class="sub" id="sub">框选截图 · 就地翻译替换</div>
+
+  <div class="card">
+    <h2>快捷键</h2>
+    <div class="row">
+      <label>全局快捷键</label>
+      <div class="rec" id="hotkey" tabindex="0" role="button" title="点击后按下组合键">
+        <span id="hotkeyText">Alt+Shift+A</span>
+        <span class="rec-x" id="hotkeyClear" title="清除（关闭快捷键）">×</span>
+      </div>
+    </div>
+    <div class="hint" id="hotkeyHint"></div>
+  </div>
+
+  <div class="card">
+    <h2>翻译引擎</h2>
+    <div class="row">
+      <label>引擎</label>
+      <div class="seg" id="engineSeg">
+        <button data-v="free">免费接口</button>
+        <button data-v="llm">AI 大模型</button>
+      </div>
+    </div>
+    <div class="hint" id="engineHint"></div>
+
+    <div id="freeBox">
+      <div class="row">
+        <label>接口优先级</label>
+        <select id="freeProvider">
+          <option value="auto">自动（有道 → MyMemory → 必应 → Google）</option>
+          <option value="youdao">有道（国内推荐，快）</option>
+          <option value="mymemory">MyMemory</option>
+          <option value="edge">必应 / Edge（部分网络已失效）</option>
+          <option value="google">Google（境内不可达）</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="llmBox">
+      <div class="row">
+        <label>接口地址</label>
+        <input type="text" id="llmBase" placeholder="https://api.openai.com/v1" />
+      </div>
+      <div class="row">
+        <label>API Key</label>
+        <input type="password" id="llmKey" placeholder="sk-..." />
+      </div>
+      <div class="row">
+        <label>模型</label>
+        <input type="text" id="llmModel" placeholder="gpt-4o-mini" />
+      </div>
+      <div class="hint">
+        任何 OpenAI 兼容接口都行：官方、Azure、DeepSeek、通义、智谱、Moonshot、本地 Ollama / vLLM 等。<br />
+        大模型会按界面文案习惯意译，效果最接近微信截图翻译（例如 <code>WorkBuddy, 我帮你</code> → <code>工作伙伴，我来帮您</code>）。
+      </div>
+    </div>
+
+    <div class="row">
+      <label>目标语言</label>
+      <select id="targetLang"></select>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>识别与渲染</h2>
+    <div class="row">
+      <label>OCR 引擎</label>
+      <div class="seg" id="ocrSeg">
+        <button data-v="local">本地 PaddleOCR PP-OCRv4（离线免费）</button>
+      </div>
+    </div>
+    <label class="check"><input type="checkbox" id="textColorAuto" /> 译文颜色自动匹配原文（关掉则统一用深色）</label>
+    <label class="check"><input type="checkbox" id="fontWeightAuto" /> 译文自动判断粗体（按原文笔画粗细）</label>
+    <div class="row">
+      <label>译文字号</label>
+      <select id="fontSizeScale">
+        <option value="0.85">偏小</option>
+        <option value="1">标准</option>
+        <option value="1.15">偏大</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>行为</h2>
+    <label class="check"><input type="checkbox" id="autoCopy" /> 点击「完成 ✓」时自动复制到剪贴板</label>
+  </div>
+
+  <div class="card">
+    <h2>数据目录</h2>
+    <div class="row">
+      <label>当前位置</label>
+      <div class="path" id="dataDirPath">—</div>
+    </div>
+    <div class="hint" id="dataDirHint"></div>
+    <div class="btns">
+      <button class="act" id="btnDirChange">更改…</button>
+      <button class="act" id="btnDirOpen">打开目录</button>
+      <button class="act" id="btnDirReset">恢复默认</button>
+    </div>
+    <div class="hint">
+      这里存放配置文件 <code>settings.json</code> 和运行日志。
+      挪到别的盘可以省 C 盘空间；切换时会把现有配置一起搬过去。
+      <b>需要重启程序才能生效。</b>
+    </div>
+    <div class="hint" id="paths"></div>
+  </div>
+
+  <div id="restartBar" class="hidden">
+    <span id="restartText"></span>
+    <button class="act primary" id="btnRestart">立即重启</button>
+    <button class="act" id="btnRestartLater">稍后</button>
+  </div>
+
+  <div id="foot">
+    <span id="status"></span>
+    <button class="act" id="btnTest">测试连通性</button>
+    <button class="act" id="btnLang">校验识别引擎</button>
+    <button class="act primary" id="btnSave">保存</button>
+  </div>
+
+  <script src="settings.js"></script>
+</body>
+</html>

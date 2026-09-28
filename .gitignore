@@ -1,0 +1,24 @@
+# 依赖
+node_modules/
+
+# 构建产物（打包 exe 约 200MB，不入库）
+dist/
+dist-*/
+out/
+*.asar
+
+# 旧的 Tesseract 语言包与缓存（已随引擎替换移除）
+lang-data/
+.tess-cache/
+
+# 测试/标定脚本生成的中间文件（保留 demo-before.png / demo-after.png 等结果图）
+demo/_*
+
+# 日志
+*.log
+npm-debug.log*
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini

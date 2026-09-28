@@ -1,0 +1,192 @@
+{
+  "provider": "youdao",
+  "size": [
+    760,
+    460
+  ],
+  "drawn": [
+    {
+      "from": "Translate any text on your screen",
+      "to": "翻译屏幕上的任何文本",
+      "bbox": [
+        67.23958333333334,
+        71.66666666666667,
+        691.7708333333334,
+        119.04166666666667
+      ],
+      "bg": "rgb(255,255,255)",
+      "fg": "rgb(26,29,33)",
+      "bold": true,
+      "strokeRatio": 0.154,
+      "fontSize": 38,
+      "align": "left"
+    },
+    {
+      "from": "Press Alt+Shift+A, drag to select a region, then hit the translate button.",
+      "to": "按Alt+Shift+A，拖动选择一个区域，然后点击翻译按钮。",
+      "bbox": [
+        58.3125,
+        126.20833333333334,
+        655.1770833333334,
+        187.16666666666669
+      ],
+      "bg": "rgb(255,255,255)",
+      "fg": "rgb(111,114,132)",
+      "bold": false,
+      "strokeRatio": 0.042,
+      "fontSize": 19,
+      "align": "left"
+    },
+    {
+      "from": "Get Started",
+      "to": "开始",
+      "bbox": [
+        94,
+        216.45833333333334,
+        214,
+        246.41666666666669
+      ],
+      "bg": "rgb(10,132,255)",
+      "fg": "rgb(255,255,255)",
+      "bold": true,
+      "strokeRatio": 0.16,
+      "fontSize": 21,
+      "align": "left"
+    },
+    {
+      "from": "NEW",
+      "to": "新",
+      "bbox": [
+        256,
+        216.45833333333334,
+        316,
+        246.41666666666669
+      ],
+      "bg": "rgb(255,59,48)",
+      "fg": "rgb(255,255,255)",
+      "bold": true,
+      "strokeRatio": 0.12,
+      "fontSize": 15,
+      "align": "left"
+    },
+    {
+      "from": "Regular weight sample",
+      "to": "标准重量样品",
+      "bbox": [
+        65.27083333333334,
+        285.4166666666667,
+        333.53125,
+        319.2916666666667
+      ],
+      "bg": "rgb(255,255,255)",
+      "fg": "rgb(26,29,33)",
+      "bold": false,
+      "strokeRatio": 0.074,
+      "fontSize": 24,
+      "align": "left"
+    },
+    {
+      "from": "Bold weight sample",
+      "to": "粗体重量样本",
+      "bbox": [
+        65.27083333333334,
+        356.33333333333337,
+        310.77083333333337,
+        390.20833333333337
+      ],
+      "bg": "rgb(255,255,255)",
+      "fg": "rgb(26,29,33)",
+      "bold": true,
+      "strokeRatio": 0.148,
+      "fontSize": 24,
+      "align": "left"
+    }
+  ],
+  "skipped": [],
+  "all": [
+    {
+      "bbox": {
+        "x0": 72.23958333333334,
+        "y0": 76.66666666666667,
+        "x1": 686.7708333333334,
+        "y1": 114.04166666666667
+      },
+      "text": "Translate any text on your screen",
+      "translation": "翻译屏幕上的任何文本",
+      "lineCount": 1,
+      "confidence": 97,
+      "fontSize": 38,
+      "align": "left"
+    },
+    {
+      "bbox": {
+        "x0": 65.3125,
+        "y0": 133.20833333333334,
+        "x1": 648.1770833333334,
+        "y1": 180.16666666666669
+      },
+      "text": "Press Alt+Shift+A, drag to select a region, then hit the translate button.",
+      "translation": "按Alt+Shift+A，拖动选择一个区域，然后点击翻译按钮。",
+      "lineCount": 2,
+      "confidence": 99.5,
+      "fontSize": 19,
+      "align": "left"
+    },
+    {
+      "bbox": {
+        "x0": 97,
+        "y0": 219.45833333333334,
+        "x1": 211,
+        "y1": 243.41666666666669
+      },
+      "text": "Get Started",
+      "translation": "开始",
+      "lineCount": 1,
+      "confidence": 98,
+      "fontSize": 21,
+      "align": "left"
+    },
+    {
+      "bbox": {
+        "x0": 259,
+        "y0": 219.45833333333334,
+        "x1": 313,
+        "y1": 243.41666666666669
+      },
+      "text": "NEW",
+      "translation": "新",
+      "lineCount": 1,
+      "confidence": 98,
+      "fontSize": 15,
+      "align": "left"
+    },
+    {
+      "bbox": {
+        "x0": 69.27083333333334,
+        "y0": 289.4166666666667,
+        "x1": 329.53125,
+        "y1": 315.2916666666667
+      },
+      "text": "Regular weight sample",
+      "translation": "标准重量样品",
+      "lineCount": 1,
+      "confidence": 100,
+      "fontSize": 24,
+      "align": "left"
+    },
+    {
+      "bbox": {
+        "x0": 69.27083333333334,
+        "y0": 360.33333333333337,
+        "x1": 306.77083333333337,
+        "y1": 386.20833333333337
+      },
+      "text": "Bold weight sample",
+      "translation": "粗体重量样本",
+      "lineCount": 1,
+      "confidence": 100,
+      "fontSize": 24,
+      "align": "left"
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "name": "snaptrans",
+  "productName": "SnapTrans",
+  "version": "1.0.0",
+  "description": "截图翻译 - 框选截图、就地翻译替换，类似微信截图翻译",
+  "main": "main.js",
+  "author": "SnapTrans",
+  "license": "MIT",
+  "scripts": {
+    "start": "node scripts/start.js",
+    "uitest": "node scripts/start.js scripts/uitest.js",
+    "diag:ocr": "node scripts/start.js scripts/diag-ocr.js",
+    "test:hotkey": "node scripts/hotkey-test.js",
+    "test:datadir": "node scripts/start.js scripts/datadir-test.js",
+    "test:settings": "node scripts/start.js scripts/settings-uitest.js",
+    "test:fontsize": "node scripts/start.js scripts/test-fontsize.js",
+    "calib:inkratio": "node scripts/start.js scripts/calib-inkratio.js",
+    "icons": "node scripts/make-icons.js",
+    "postinstall": "node scripts/make-icons.js",
+    "dist": "electron-builder --win --x64",
+    "pack": "electron-builder --win --x64 --dir"
+  },
+  "dependencies": {
+    "@gutenye/ocr-node": "^1.4.9"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.snaptrans.app",
+    "productName": "SnapTrans",
+    "electronDist": "node_modules/electron/dist",
+    "compression": "maximum",
+    "electronLanguages": [
+      "zh-CN",
+      "en-US"
+    ],
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "renderer/**/*",
+      "assets/**/*",
+      "package.json",
+      "!**/*.map",
+      "!node_modules/onnxruntime-node/script/**",
+      "!node_modules/onnxruntime-node/bin/napi-v6/darwin/**",
+      "!node_modules/onnxruntime-node/bin/napi-v6/linux/**",
+      "!node_modules/onnxruntime-node/bin/napi-v6/win32/arm64/**",
+      "!node_modules/onnxruntime-node/bin/napi-v6/win32/x64/DirectML.dll",
+      "!node_modules/onnxruntime-node/bin/napi-v6/win32/x64/dxcompiler.dll",
+      "!node_modules/onnxruntime-node/bin/napi-v6/win32/x64/dxil.dll",
+      "!node_modules/@gutenye/ocr-models/assets/**"
+    ],
+    "asarUnpack": [
+      "node_modules/onnxruntime-node/**",
+      "node_modules/sharp/**",
+      "node_modules/@img/**",
+      "node_modules/@gutenye/**",
+      "node_modules/@techstark/**",
+      "node_modules/tiny-invariant/**",
+      "node_modules/js-clipper/**"
+    ],
+    "extraResources": [
+      {
+        "from": "node_modules/@gutenye/ocr-models/assets",
+        "to": "models"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/app.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "截图翻译"
+    }
+  }
+}
